@@ -10,7 +10,7 @@ from aiohttp import web
 from plugins.web_support import web_server
 
 logging.config.fileConfig('logging.conf')
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.DEBUG)  # INFO থেকে DEBUG করুন
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 
 
@@ -28,24 +28,27 @@ class Bot(Client):
         )
 
     async def start(self):
-       await super().start()
-       me = await self.get_me()
-       self.mention = me.mention
-       self.username = me.username 
-       self.force_channel = FORCE_SUB
-       if FORCE_SUB:
-         try:
-            link = await self.export_chat_invite_link(FORCE_SUB)                  
-            self.invitelink = link
-         except Exception as e:
-            logging.warning(e)
-            logging.warning("Make Sure Bot admin in force sub channel")             
-            self.force_channel = None
-       app = web.AppRunner(await web_server())
-       await app.setup()
-       bind_address = "0.0.0.0"
-       await web.TCPSite(app, bind_address, PORT).start()
-       logging.info(f"{me.first_name} ✅✅ BOT started successfully ✅✅")
+        try:
+            await super().start()
+            me = await self.get_me()
+            self.mention = me.mention
+            self.username = me.username 
+            self.force_channel = FORCE_SUB
+            if FORCE_SUB:
+                try:
+                    link = await self.export_chat_invite_link(FORCE_SUB)                  
+                    self.invitelink = link
+                except Exception as e:
+                    logging.error(f"Force Sub Channel Error: {e}")  # এই লাইন যোগ করুন
+                    self.force_channel = None
+            logging.info(f"Bot Started Successfully as {me.first_name}")
+        except Exception as e:
+            logging.error(f"Error in start: {e}")  # এই লাইন যোগ করুন
+        app = web.AppRunner(await web_server())
+        await app.setup()
+        bind_address = "0.0.0.0"
+        await web.TCPSite(app, bind_address, PORT).start()
+        logging.info(f"{me.first_name} ✅✅ BOT started successfully ✅✅")
       
 
     async def stop(self, *args):
