@@ -9,9 +9,16 @@ from config import API_ID, API_HASH, BOT_TOKEN, FORCE_SUB, PORT
 from aiohttp import web
 from plugins.web_support import web_server
 
-logging.config.fileConfig('logging.conf')
-logging.getLogger().setLevel(logging.DEBUG)  # INFO থেকে DEBUG করুন
-logging.getLogger("pyrogram").setLevel(logging.ERROR)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('TelegramBot.log'),
+        logging.StreamHandler()
+    ]
+)
+
+logging.getLogger("pyrogram").setLevel(logging.WARNING)
 
 
 class Bot(Client):
