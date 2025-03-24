@@ -43,14 +43,23 @@ class Bot(Client):
             self.force_channel = FORCE_SUB
             if FORCE_SUB:
                 try:
-                    link = await self.export_chat_invite_link(FORCE_SUB)                  
+                    # First check if bot is admin
+                    chat = await self.get_chat(FORCE_SUB)
+                    bot_member = await self.get_chat_member(FORCE_SUB, me.id)
+                    if bot_member.status != "administrator":
+                        logging.error("Bot must be admin in force sub channel")
+                        self.force_channel = None
+                        return
+                    
+                    # Then try to export link
+                    link = await self.export_chat_invite_link(FORCE_SUB)
                     self.invitelink = link
                 except Exception as e:
-                    logging.error(f"Force Sub Channel Error: {e}")  # এই লাইন যোগ করুন
+                    logging.error(f"Force Sub Channel Error: {e}")
                     self.force_channel = None
             logging.info(f"Bot Started Successfully as {me.first_name}")
         except Exception as e:
-            logging.error(f"Error in start: {e}")  # এই লাইন যোগ করুন
+            logging.error(f"Error in start: {e}")
         app = web.AppRunner(await web_server())
         await app.setup()
         bind_address = "0.0.0.0"
