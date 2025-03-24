@@ -1,34 +1,56 @@
-# Don't Remove Credit @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot @Tech_VJ
-# Ask Doubt on telegram @KingVJ01
-
 from pyrogram import Client, filters
-from pyrogram.enums import MessageMediaType
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ForceReply
+from helper.database import db
+import logging
+
+@Client.on_message(filters.private & (filters.document | filters.audio | filters.video))
+async def rename_start(client, message):
+    try:
+        file = getattr(message, message.media.value)
+        filename = file.file_name if hasattr(file, 'file_name') else 'Not Available'
+        filesize = file.file_size if hasattr(file, 'file_size') else 0
+        
+        try:
+            text = f"""**__What do you want me to do with this file?__**\n\n**File Name** :- `{filename}`\n\n**File Size** :- `{filesize}`"""
+            buttons = [[ InlineKeyboardButton("📝 RENAME", callback_data="rename") ],
+                      [ InlineKeyboardButton("✖️ CANCEL", callback_data="cancel") ]]
+            await message.reply_text(
+                text=text,
+                reply_to_message_id=message.id,
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+            logging.info(f"Rename request received for file: {filename}")
+        except Exception as e:
+            logging.error(f"Error in rename_start: {e}")
+            await message.reply_text("An error occurred. Please try again later.")
+            
+    except Exception as e:
+        logging.error(f"Main error in rename_start: {e}")
+        await message.reply_text("Sorry, I couldn't process this file. Please try again.")
 
 @Client.on_message(filters.private & filters.reply)
 async def refunc(client, message):
-    reply_message = message.reply_to_message
-    if (reply_message.reply_markup) and isinstance(reply_message.reply_markup, ForceReply):
-       new_name = message.text 
-       await message.delete() 
-       msg = await client.get_messages(message.chat.id, reply_message.id)
-       file = msg.reply_to_message
-       media = getattr(file, file.media.value)
-       if not "." in new_name:
-          if "." in media.file_name:
-              extn = media.file_name.rsplit('.', 1)[-1]
-          else:
-              extn = "mkv"
-          new_name = new_name + "." + extn
-       await reply_message.delete()
-
-       button = [[InlineKeyboardButton("📁 𝙳𝙾𝙲𝚄𝙼𝙴𝙽𝚃𝚂",callback_data = "upload_document")]]
-       if file.media in [MessageMediaType.VIDEO, MessageMediaType.DOCUMENT]:
-           button.append([InlineKeyboardButton("🎥 𝚅𝙸𝙳𝙴𝙾",callback_data = "upload_video")])
-       elif file.media == MessageMediaType.AUDIO:
-           button.append([InlineKeyboardButton("🎵 𝙰𝙾𝚄𝙳𝙸𝙾",callback_data = "upload_audio")])
-       await message.reply_text(
-          f"**Select the output file type**\n**• File Name :-**```{new_name}```",
-          reply_to_message_id=file.id,
-          reply_markup=InlineKeyboardMarkup(button))
+    try:
+        reply_message = message.reply_to_message
+        if (reply_message.reply_markup) and isinstance(reply_message.reply_markup, ForceReply):
+            new_name = message.text 
+            await message.delete() 
+            msg = await client.get_messages(message.chat.id, reply_message.id)
+            file = msg.reply_to_message
+            media = getattr(file, file.media.value)
+            if not "." in new_name:
+                if "." in media.file_name:
+                    extn = media.file_name.rsplit('.', 1)[-1]
+                else:
+                    extn = "mkv"
+                new_name = new_name + "." + extn
+            await reply_message.delete()
+            
+            # Add logging
+            logging.info(f"Renaming file to: {new_name}")
+            
+            # Continue with your rename process...
+            
+    except Exception as e:
+        logging.error(f"Error in refunc: {e}")
+        await message.reply_text("An error occurred during renaming. Please try again.")
